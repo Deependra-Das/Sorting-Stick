@@ -53,7 +53,7 @@ namespace UI
 			void quickSortButtonCallback();
 			void radixSortButtonCallback();
 			void quitButtonCallback();
-
+			void changeGameStateToGameplay();
 			void destroy();
 
 		public:
