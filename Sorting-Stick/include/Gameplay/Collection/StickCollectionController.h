@@ -70,6 +70,7 @@ namespace Gameplay
             sf::String getTimeComplexity();
 
             void processBubbleSort();
+            void processInsertionSort();
         };
     }
 }
