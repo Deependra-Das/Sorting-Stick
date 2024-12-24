@@ -46,6 +46,18 @@ namespace Gameplay
             void resetVariables();
 
             void processSortThreadState();
+            void processBubbleSort();
+            void processInsertionSort();
+            void processSelectionSort();
+
+            void processInPlaceMergeSort();
+            void processMergeSort();
+
+            void inPlaceMergeSort(int left, int right);
+            void mergeSort(int left, int right);
+         
+            void inPlaceMerge(int left, int mid, int right);
+            void merge(int left, int mid, int right);
 
             bool isCollectionSorted();
             void destroy();
@@ -69,9 +81,7 @@ namespace Gameplay
             int getDelayMilliseconds();
             sf::String getTimeComplexity();
 
-            void processBubbleSort();
-            void processInsertionSort();
-            void processSelectionSort();
+      
         };
     }
 }
