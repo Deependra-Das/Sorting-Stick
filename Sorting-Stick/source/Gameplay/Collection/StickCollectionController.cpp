@@ -170,6 +170,10 @@ namespace Gameplay
 				time_complexity = "O(n^2)";
 				sort_thread = std::thread(&StickCollectionController::processSelectionSort, this);
 				break;
+			case Gameplay::Collection::SortType::MERGE_SORT:
+				time_complexity = "O(n^2)";
+				sort_thread = std::thread(&StickCollectionController::processInPlaceMergeSort, this);
+				break;
 			}
 		}
 
@@ -358,6 +362,73 @@ namespace Gameplay
 			setCompletedColor();
 		}
 
+		void StickCollectionController::processInPlaceMergeSort()
+		{
+			if (sticks.size() > 1)
+			{
+				inPlaceMergeSort(0, sticks.size() - 1);
+				setCompletedColor();
+			}
+		}
+
+		void StickCollectionController::inPlaceMerge(int left, int mid, int right)
+		{
+			Sound::SoundService* sound_service = Global::ServiceLocator::getInstance()->getSoundService();
+
+			int start2 = mid + 1;
+			if (sticks[mid]->data <= sticks[start2]->data)
+			{
+				number_of_comparisons++;
+				number_of_array_access += 2;
+				return;
+			}
+
+			while (left <= mid && start2 <= right)
+			{
+				number_of_comparisons++;
+				number_of_array_access += 2;
+
+				if (sticks[left]->data <= sticks[start2]->data)
+				{
+					left++;
+				}
+				else
+				{
+					Stick* temp = sticks[start2];
+					for (int k = start2; k > left; k--)
+					{
+						sticks[k] = sticks[k - 1];
+					}
+					sticks[left] = temp;
+					number_of_array_access++;
+					left++;
+					mid++;
+					start2++;
+					updateStickPosition();
+				}
+				sound_service->playSound(Sound::SoundType::COMPARE_SFX);
+				sticks[left - 1]->stick_view->setFillColor(collection_model->processing_element_color);
+				std::this_thread::sleep_for(std::chrono::milliseconds(current_operation_delay));
+				sticks[left - 1]->stick_view->setFillColor(collection_model->element_color);
+		
+			}
+
+
+		}
+
+		void StickCollectionController::inPlaceMergeSort(int left, int right)
+		{
+			if (left < right)
+			{
+				int mid = left + (right - left) / 2;
+
+				inPlaceMergeSort(left, mid);
+				inPlaceMergeSort(mid + 1, right);
+
+				inPlaceMerge(left, mid, right);
+
+			}
+		}
 		void StickCollectionController::setCompletedColor()
 		{
 			Sound::SoundService* sound_service = Global::ServiceLocator::getInstance()->getSoundService();
