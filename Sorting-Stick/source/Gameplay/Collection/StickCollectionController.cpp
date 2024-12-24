@@ -174,6 +174,10 @@ namespace Gameplay
 				time_complexity = "O(n Log n)";
 				sort_thread = std::thread(&StickCollectionController::processMergeSort, this);
 				break;
+			case Gameplay::Collection::SortType::QUICK_SORT:
+				time_complexity = "O(n Log n)";
+				sort_thread = std::thread(&StickCollectionController::processQuickSort, this);
+				break;
 			}
 		}
 
@@ -510,6 +514,69 @@ namespace Gameplay
 
 				merge(left, mid, right);
 
+			}
+		}
+
+		void StickCollectionController::processQuickSort()
+		{
+			if (sticks.size() > 1)
+			{
+				quickSort(0, sticks.size() - 1);
+				setCompletedColor();
+			}
+		}
+
+		int StickCollectionController::partition(int left, int right)
+		{
+			Sound::SoundService* sound_service = Global::ServiceLocator::getInstance()->getSoundService();
+			
+			Stick* pivotElemenet = sticks[right];
+			sticks[right]->stick_view->setFillColor(collection_model->selected_element_color);
+
+			int i = left - 1;
+			for (int j = left; j < right; j++)
+			{
+				sticks[j]->stick_view->setFillColor(collection_model->processing_element_color);
+				number_of_comparisons++;
+				number_of_array_access += 2;
+
+				if (sticks[j]->data < pivotElemenet->data)
+				{
+					i++;
+					std::swap(sticks[i], sticks[j]);
+					number_of_array_access+=3;
+					sound_service->playSound(Sound::SoundType::COMPARE_SFX);
+					updateStickPosition();				
+					std::this_thread::sleep_for(std::chrono::milliseconds(current_operation_delay));
+				
+				}
+				else
+				{
+					sticks[j]->stick_view->setFillColor(collection_model->element_color);
+				}
+
+			}
+			std::swap(sticks[i + 1], sticks[right]);
+			number_of_array_access += 3;
+			updateStickPosition();
+
+			return i + 1;
+
+		}
+
+		void StickCollectionController::quickSort(int left, int right)
+		{
+			if (left < right)
+			{
+				int pivotIndex = partition(left, right);
+				quickSort(left, pivotIndex - 1);
+				quickSort(pivotIndex + 1, right);
+
+				for (int i = left; i <= right; i++) 
+				{
+					sticks[i]->stick_view->setFillColor(collection_model->placement_position_element_color);
+					updateStickPosition();
+				}
 			}
 		}
 
