@@ -178,6 +178,10 @@ namespace Gameplay
 				time_complexity = "O(n Log n)";
 				sort_thread = std::thread(&StickCollectionController::processQuickSort, this);
 				break;
+			case Gameplay::Collection::SortType::RADIX_SORT:
+				time_complexity = "O(w*(n+k))";
+				sort_thread = std::thread(&StickCollectionController::processRadixSort, this);
+				break;
 			}
 		}
 
@@ -579,6 +583,83 @@ namespace Gameplay
 				}
 			}
 		}
+
+		void StickCollectionController::processRadixSort()
+		{
+			if (sticks.size() > 1)
+			{
+				radixSort();
+				setCompletedColor();
+			}
+		}
+
+		void StickCollectionController::countSort(int exponent)
+		{
+			Sound::SoundService* sound_service = Global::ServiceLocator::getInstance()->getSoundService();
+			std::vector<Stick*> output(sticks.size());
+
+			std::vector<int> count(10,0);
+
+			for (int i = 0; i < sticks.size(); i++)
+			{
+				sound_service->playSound(Sound::SoundType::COMPARE_SFX);
+				int digit = (sticks[i]->data / exponent) % 10;
+				count[digit]++;
+				number_of_array_access ++;
+				sticks[i]->stick_view->setFillColor(collection_model->processing_element_color);
+				std::this_thread::sleep_for(std::chrono::milliseconds(current_operation_delay));
+				sticks[i]->stick_view->setFillColor(collection_model->element_color);
+			}
+
+			for (int i = 1; i < 10; i++) {
+				count[i] += count[i - 1];
+			}
+
+			for (int i = sticks.size() - 1; i >= 0; i--)
+			{
+				int digit = (sticks[i]->data / exponent) % 10;
+				output[count[digit] - 1] = sticks[i];
+				sticks[count[digit] - 1]->stick_view->setFillColor(collection_model->temporary_processing_color);
+				count[digit]--;
+				number_of_array_access ++;
+			}
+
+			for (int i = 0; i < sticks.size(); i++)
+			{
+				sticks[i] = output[i];
+				sticks[i]->stick_view->setFillColor(collection_model->placement_position_element_color);
+				updateStickPosition(i);
+				std::this_thread::sleep_for(std::chrono::milliseconds(current_operation_delay));
+			}
+		}
+
+		void StickCollectionController::radixSort()
+		{
+			int maxElement = INT_MIN;
+
+			for (int i = 0; i < sticks.size(); i++)
+			{
+				if (sticks[i]->data > maxElement)
+				{
+					maxElement = sticks[i]->data;
+				}
+			}
+
+			for (int exponent = 1; maxElement / exponent > 0; exponent*=10)
+			{
+				countSort(exponent);
+			}
+
+		}
+
+		void StickCollectionController::updateStickPosition(int i)
+		{
+			float x_position = (i * sticks[i]->stick_view->getSize().x) + ((i)*collection_model->elements_spacing);
+			float y_position = collection_model->element_y_position - sticks[i]->stick_view->getSize().y;
+
+			sticks[i]->stick_view->setPosition(sf::Vector2f(x_position, y_position));
+		}
+
 
 		void StickCollectionController::setCompletedColor()
 		{
